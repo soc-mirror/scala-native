@@ -22,6 +22,7 @@ package java.util.regex
   * @author Johannes Schindelin
   */
 object Compiler {
+
   private val regularCharacter: CharacterMatcher = CharacterMatcher.parse("[^\\\\.*+?|\\[\\]{}()^$]")
 
   private class Output(val expr: Compiler#Expression) {
@@ -96,7 +97,7 @@ object Compiler {
 class Compiler() {
 
   private var root: Compiler#Group0 = new Group0
-  private var groups: java.util.Stack[Compiler#Group] = new java.util.Stack[Compiler#Group]
+  private var groups: java.util.ArrayList[Compiler#Group] = new java.util.ArrayList[Compiler#Group]
 
   groups.add(root.group)
 
@@ -377,7 +378,7 @@ class Compiler() {
     scala.util.control.Breaks.breakable {
       while (index < array.length) {
         var c: Char = array(index)
-        val current: Compiler#Group = groups.peek
+        val current: Compiler#Group = groups.get(groups.size - 1) // peek
         if (Compiler.regularCharacter.matches(c)) {
           current.push(c)
           ??? // continue //todo: continue is not supported
@@ -478,19 +479,21 @@ class Compiler() {
                   capturing = false
                   val lookaround: Compiler#Lookaround = new Lookaround(lookAhead, c == '!')
                   current.push(lookaround)
-                  groups.push(lookaround.group)
+                  groups.add(lookaround.group) // push
                   ??? // continue //todo: continue is not supported
                 }
                 case _ =>
                   throw new UnsupportedOperationException("Not yet supported: " + regex.substring(index))
               }
             }
-            current.push(groups.push(new Group(capturing, null)))
+            val newGroup = new Group(capturing, null)
+            groups.add(newGroup) // push
+            current.push(newGroup)
           case ')' =>
             if (groups.size < 2) {
               throw new RuntimeException(s"Invalid group close @$index: $regex")
             }
-            groups.pop
+            groups.remove(groups.size - 1) // pop
           case '[' => {
             val matcher: CharacterMatcher = characterClassParser.parseClass(index)
             if (matcher == null) {

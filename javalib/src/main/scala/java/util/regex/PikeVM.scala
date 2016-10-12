@@ -41,14 +41,13 @@ object PikeVM {
   }
 }
 
-class PikeVM protected[regex](val program: Array[Int], /*
-   * For find(), we do not want to anchor the match at the start offset. Our
-   * compiler allows this by prefixing the code with an implicit '(?:.*?)'. For
-   * regular matches() calls, we want to skip that code and start at {@code
-   * findPrefixLength} instead.
-   */ val findPrefixLength: Int, val groupCount: Int, val classes: Array[CharacterMatcher], val lookarounds: Array[PikeVM]) {
-  offsetsCount = 2 * groupCount + 2
-  final private var offsetsCount: Int = 0
+ /* For `find()`, we do not want to anchor the match at the start offset.
+  * Our compiler allows this by prefixing the code with an implicit '(?:.*?)'.
+  * For regular `matches()` calls, we want to skip that code and start at
+  * `findPrefixLength` instead.
+  */
+class PikeVM protected[regex](val program: Array[Int], val findPrefixLength: Int, val groupCount: Int, val classes: Array[CharacterMatcher], val lookarounds: Array[PikeVM]) {
+  final private var offsetsCount = 2 * groupCount + 2
   private val multiLine: Boolean = false
 
   /**
