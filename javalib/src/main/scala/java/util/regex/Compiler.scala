@@ -22,7 +22,6 @@ package java.util.regex
   * @author Johannes Schindelin
   */
 object Compiler {
-
   private val regularCharacter: CharacterMatcher = CharacterMatcher.parse("[^\\\\.*+?|\\[\\]{}()^$]")
 
   private class Output(val expr: Compiler#Expression) {
@@ -375,13 +374,15 @@ class Compiler() {
     val array: Array[Char] = regex.toCharArray
     val characterClassParser: CharacterMatcher.Parser = new CharacterMatcher.Parser(array)
     var index: Int = 0
-    scala.util.control.Breaks.breakable {
-      while (index < array.length) {
+    ///
+
+    while (index < array.length) {
+      def step(): Unit = {
         var c: Char = array(index)
         val current: Compiler#Group = groups.get(groups.size - 1) // peek
         if (Compiler.regularCharacter.matches(c)) {
           current.push(c)
-          ??? // continue //todo: continue is not supported
+          return
         }
         c match {
           case '.' =>
@@ -391,28 +392,28 @@ class Compiler() {
             if (unescaped >= 0) {
               index = characterClassParser.getEndOffset - 1
               current.push(unescaped.toChar)
-              ??? // continue //todo: continue is not supported
+              return
             }
             val characterClass: CharacterMatcher = characterClassParser.parseClass(index)
             if (characterClass != null) {
               index = characterClassParser.getEndOffset - 1
               current.push(new CharacterRange(characterClass))
-              ??? // continue //todo: continue is not supported
+              return
             }
             array(index + 1) match {
               case 'b' =>
                 index += 1
                 current.push(PikeVMOpcodes.WORD_BOUNDARY)
-                ??? // continue //todo: continue is not supported
+                return
               case 'B' =>
                 index += 1
                 current.push(PikeVMOpcodes.NON_WORD_BOUNDARY)
-                ??? // continue //todo: continue is not supported
+                return
             }
             throw new RuntimeException("Parse error @" + index + ": " + regex)
-          case '?' =>
-          case '*' =>
-          case '+' =>
+          case '?'
+             | '*'
+             | '+' =>
             var greedy: Boolean = true
             if (index + 1 < array.length && array(index + 1) == '?') {
               greedy = false
@@ -421,6 +422,7 @@ class Compiler() {
             current.push(new Repeat(current.pop, if (c == '+') 1
             else 0, if (c == '?') 1
             else -1, greedy))
+            return
           case '{' =>
             index += 1
             var length: Int = characterClassParser.digits(index, 8, 10)
@@ -448,6 +450,7 @@ class Compiler() {
               greedy = false
             }
             current.push(new Repeat(current.pop, min, max, greedy))
+            return
           case '(' =>
             var capturing: Boolean = true
             if (index + 1 < array.length && array(index + 1) == '?') {
@@ -473,14 +476,13 @@ class Compiler() {
               c match {
                 case ':' =>
                   capturing = false
-                  scala.util.control.Breaks.break()
-                case '!' =>
-                case '=' => {
+                case '!'
+                   | '=' => {
                   capturing = false
                   val lookaround: Compiler#Lookaround = new Lookaround(lookAhead, c == '!')
                   current.push(lookaround)
                   groups.add(lookaround.group) // push
-                  ??? // continue //todo: continue is not supported
+                  return
                 }
                 case _ =>
                   throw new UnsupportedOperationException("Not yet supported: " + regex.substring(index))
@@ -489,11 +491,13 @@ class Compiler() {
             val newGroup = new Group(capturing, null)
             groups.add(newGroup) // push
             current.push(newGroup)
+            return
           case ')' =>
             if (groups.size < 2) {
               throw new RuntimeException(s"Invalid group close @$index: $regex")
             }
             groups.remove(groups.size - 1) // pop
+            return
           case '[' => {
             val matcher: CharacterMatcher = characterClassParser.parseClass(index)
             if (matcher == null) {
@@ -501,19 +505,25 @@ class Compiler() {
             }
             current.push(new CharacterRange(matcher))
             index = characterClassParser.getEndOffset - 1
+            return
           }
           case '|' =>
             current.startAlternative()
+            return
           case '^' =>
             current.push(PikeVMOpcodes.LINE_START)
+            return
           case '$' =>
             current.push(PikeVMOpcodes.LINE_END)
+            return
           case _ =>
             throw new RuntimeException(s"Parse error @$index: $regex")
         }
-      index += 1
       }
+      step()
+      index += 1
     }
+    ///
     if (groups.size != 1) {
       throw new IllegalArgumentException(s"Unclosed groups: (${groups.size - 1}): $regex")
     }

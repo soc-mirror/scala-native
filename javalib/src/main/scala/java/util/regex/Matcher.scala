@@ -22,7 +22,6 @@ package java.util.regex
   * @author zsombor and others
   */
 abstract class Matcher(protected var input: CharSequence) {
-  reset(input)
   protected[regex] var _start: Int = 0
   protected[regex] var _end: Int = 0
 

@@ -22,10 +22,13 @@ package java.util.regex
   *
   * @author Johannes Schindelin
   */
-class RegexMatcher private[regex](val vm: PikeVM, val string: CharSequence) extends Matcher(string) {
+class RegexMatcher private[regex](val vm: PikeVM, _input: CharSequence) extends Matcher(_input) {
   private var array: Array[Char] = null
   private[regex] var groupStart: Array[Int] = null
   private[regex] var groupEnd: Array[Int] = null
+
+  reset(input)
+
   final private val adapter: PikeVM.Result = new PikeVM.Result() {
     def set(start: Array[Int], end: Array[Int]): Unit = {
       RegexMatcher.this._start = start(0)
@@ -48,6 +51,7 @@ class RegexMatcher private[regex](val vm: PikeVM, val string: CharSequence) exte
   }
 
   override def matches: Boolean = {
+    if (array == null) println("array null!")
     vm.matches(array, 0, array.length, true, true, adapter)
   }
 

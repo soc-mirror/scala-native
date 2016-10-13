@@ -23,6 +23,8 @@ package java.util.regex
   * @author zsombor and others
   */
 class TrivialMatcher private[regex](val pattern: String, _input: CharSequence) extends Matcher(_input) {
+  reset(input)
+
   override def matches: Boolean = {
     if (pattern == input.toString) {
       _start = 0

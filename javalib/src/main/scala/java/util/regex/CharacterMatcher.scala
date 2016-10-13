@@ -266,7 +266,7 @@ class CharacterMatcher private(var map: Array[Boolean], var inversePattern: Bool
     var i: Int = 0
     while (i < map.length) {
       i += 1
-      def loop(): Unit = {
+      def step(): Unit = {
         if (!map(i)) {
           return
         }
@@ -286,7 +286,7 @@ class CharacterMatcher private(var map: Array[Boolean], var inversePattern: Bool
           i = j
         }
       }
-      loop()
+      step()
     }
     builder.append("]")
     builder.toString

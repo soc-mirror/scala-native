@@ -85,8 +85,6 @@ class PikeVM protected[regex](val program: Array[Int], val findPrefixLength: Int
       this()
       head = startPC
       tail = startPC
-      _next = new Array[Int](program.length + 1)
-      offsets = new Array[Array[Int]](program.length + 1)
       offsets(head) = new Array[Int](offsetsCount)
     }
 
@@ -195,6 +193,10 @@ class PikeVM protected[regex](val program: Array[Int], val findPrefixLength: Int
     }
 
     def saveOffset(pc: Int, index: Int, offset: Int): Unit = {
+      println(s"offsets($pc)($index)")
+      println(s"offsets.length: ${offsets.length}")
+      println(s"offsets(pc).length: ${offsets(pc).length}")
+      offsets.mkString("[", ",", "]")
       offsets(pc)(index) = offset + 1
     }
 
@@ -216,27 +218,25 @@ class PikeVM protected[regex](val program: Array[Int], val findPrefixLength: Int
       var previous: Int = -1
       var pc: Int = head
       while (pc >= 0) {
-        {
-          val nextPC: Int = _next(pc) - 1
-          if (start + 1 == offsets(pc)(0)) {
-            previous = pc
+        val nextPC: Int = _next(pc) - 1
+        if (start + 1 == offsets(pc)(0)) {
+          previous = pc
+        }
+        else {
+          _next(pc) = 0
+          offsets(pc) = null
+          if (pc == tail) {
+            head = -1
+            tail = -1
+          }
+          else if (previous < 0) {
+            head = nextPC
           }
           else {
-            _next(pc) = 0
-            offsets(pc) = null
-            if (pc == tail) {
-              head = -1
-              tail = -1
-            }
-            else if (previous < 0) {
-              head = nextPC
-            }
-            else {
-              _next(previous) = 1 + nextPC
-            }
+            _next(previous) = 1 + nextPC
           }
-          pc = nextPC
         }
+        pc = nextPC
       }
     }
 
@@ -260,12 +260,10 @@ class PikeVM protected[regex](val program: Array[Int], val findPrefixLength: Int
     def clean(): Unit = {
       var pc: Int = head
       while (pc >= 0) {
-        {
-          val nextPC: Int = _next(pc) - 1
-          _next(pc) = 0
-          offsets(pc) = null
-          pc = nextPC
-        }
+        val nextPC: Int = _next(pc) - 1
+        _next(pc) = 0
+        offsets(pc) = null
+        pc = nextPC
       }
       head = -1
       tail = -1
@@ -314,17 +312,19 @@ class PikeVM protected[regex](val program: Array[Int], val findPrefixLength: Int
     else -1
     var i: Int = start
     while (i != end + step) {
-      {
-        if (queued.isEmpty) {
-          // no threads left
-          return foundMatch
-        }
-        val c: Char = if (i != end) characters(i)
-        else 0
-        var pc: Int = -1
+      if (queued.isEmpty) {
+        // no threads left
+        return foundMatch
+      }
+      val c: Char = if (i != end) characters(i)
+      else 0
+      var pc: Int = -1
 
-        scala.util.control.Breaks.breakable {
-          while (true) {
+      scala.util.control.Breaks.breakable {
+        while (true) {
+          // true:  we were only interested in a match, found one, success!
+          // false: go on.
+          def _step(): Boolean = {
             pc = current.next(pc)
             if (pc < 0) {
               pc = queued.queueOneImmediately(current)
@@ -335,7 +335,7 @@ class PikeVM protected[regex](val program: Array[Int], val findPrefixLength: Int
             // pc == program.length is a match!
             if (pc == program.length) {
               if (anchorEnd && i != end) {
-                ??? // continue //todo: continue is not supported
+                return false
               }
               if (result == null) {
                 // only interested in a match, no need to go on
@@ -356,12 +356,10 @@ class PikeVM protected[regex](val program: Array[Int], val findPrefixLength: Int
                 if (c != '\u0000' && c != '\r' && c != '\n') {
                   current.queueNext(pc, pc + 1, next)
                 }
-                scala.util.control.Breaks.break()
               case DOTALL =>
                 current.queueNext(pc, pc + 1, next)
-                scala.util.control.Breaks.break()
-              case WORD_BOUNDARY =>
-              case NON_WORD_BOUNDARY => {
+              case WORD_BOUNDARY
+                 | NON_WORD_BOUNDARY => {
                 val i2: Int = i - step
                 val c2: Int = if (i2 < 0 || i2 >= characters.length) -1
                 else characters(i2)
@@ -375,7 +373,6 @@ class PikeVM protected[regex](val program: Array[Int], val findPrefixLength: Int
                     else if (i >= 0 && i < characters.length && !PikeVM.wordCharacter.matches(c)) {
                       current.queueImmediately(pc, pc + 1, false)
                     }
-                    scala.util.control.Breaks.break()
                   case NON_WORD_BOUNDARY =>
                     if (c2 < 0 || !PikeVM.wordCharacter.matches(c2.toChar)) {
                       if (i >= 0 && i < characters.length && !PikeVM.wordCharacter.matches(c)) {
@@ -385,81 +382,74 @@ class PikeVM protected[regex](val program: Array[Int], val findPrefixLength: Int
                     else if (PikeVM.wordCharacter.matches(c)) {
                       current.queueImmediately(pc, pc + 1, false)
                     }
-                    scala.util.control.Breaks.break()
                 }
-                scala.util.control.Breaks.break()
               }
               case LINE_START =>
                 if (i == 0 || (multiLine && PikeVM.lineTerminator.matches(characters(i - 1)))) {
                   current.queueImmediately(pc, pc + 1, false)
                 }
-                scala.util.control.Breaks.break()
               case LINE_END =>
                 if (i == characters.length || (multiLine && PikeVM.lineTerminator.matches(c))) {
                   current.queueImmediately(pc, pc + 1, false)
                 }
-                scala.util.control.Breaks.break()
               case CHARACTER_CLASS =>
                 if (classes(program(pc + 1)).matches(c)) {
                   current.queueNext(pc, pc + 2, next)
                 }
-                scala.util.control.Breaks.break()
               case LOOKAHEAD =>
                 if (lookarounds(program(pc + 1)).matches(characters, i, characters.length, true, false, null)) {
                   current.queueImmediately(pc, pc + 2, false)
                 }
-                scala.util.control.Breaks.break()
               case LOOKBEHIND =>
                 if (lookarounds(program(pc + 1)).matches(characters, i - 1, -1, true, false, null)) {
                   current.queueImmediately(pc, pc + 2, false)
                 }
-                scala.util.control.Breaks.break()
               case NEGATIVE_LOOKAHEAD =>
                 if (!lookarounds(program(pc + 1)).matches(characters, i, characters.length, true, false, null)) {
                   current.queueImmediately(pc, pc + 2, false)
                 }
-                scala.util.control.Breaks.break()
               case NEGATIVE_LOOKBEHIND =>
                 if (!lookarounds(program(pc + 1)).matches(characters, i - 1, -1, true, false, null)) {
                   current.queueImmediately(pc, pc + 2, false)
                 }
-                scala.util.control.Breaks.break()
-              /* immediate opcodes, i.e. thread continues within the same step */ case SAVE_OFFSET =>
+              /* immediate opcodes, i.e. thread continues within the same step */
+              case SAVE_OFFSET =>
                 if (result != null) {
                   val index: Int = program(pc + 1)
+                  println(current)
                   current.saveOffset(pc, index, i)
                 }
                 current.queueImmediately(pc, pc + 2, false)
-                scala.util.control.Breaks.break()
               case SPLIT =>
                 current.queueImmediately(pc, program(pc + 1), true)
                 current.queueImmediately(pc, pc + 2, false)
-                scala.util.control.Breaks.break()
               case SPLIT_JMP =>
                 current.queueImmediately(pc, pc + 2, true)
                 current.queueImmediately(pc, program(pc + 1), false)
-                scala.util.control.Breaks.break()
               case JMP =>
                 current.queueImmediately(pc, program(pc + 1), false)
-                scala.util.control.Breaks.break()
-              case _ =>
+              case _ if program(pc) >= 0 && program(pc) <= 0xffff =>
                 if (program(pc) >= 0 && program(pc) <= 0xffff) {
                   if (c == program(pc).toChar) {
                     current.queueNext(pc, pc + 1, next)
                   }
-                  scala.util.control.Breaks.break()
                 }
+              case _ =>
                 throw new RuntimeException("Invalid opcode: " + opcode + " at pc " + pc)
             }
+            false
           }
+          val done = _step()
+          if (done)
+            return true
         }
-        // clean linked thread list (and states)
-        current.clean()
-        // prepare for next step
-        val swap: PikeVM#ThreadQueue = queued
-        queued = next
-        next = swap
       }
+      // clean linked thread list (and states)
+      current.clean()
+      // prepare for next step
+      val swap: PikeVM#ThreadQueue = queued
+      queued = next
+      next = swap
       i += step
     }
     foundMatch
