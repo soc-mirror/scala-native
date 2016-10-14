@@ -1,7 +1,10 @@
 package java.util
 
 class ArrayList[E] private (private[ArrayList] var values: Array[AnyRef])
-    extends AbstractList[E] with RandomAccess with Cloneable with Serializable {
+    extends AbstractList[E]
+    with RandomAccess
+    with Cloneable
+    with Serializable {
   self =>
 
   def this(initialCapacity: Int) = this(new Array[AnyRef](initialCapacity))
@@ -47,14 +50,15 @@ class ArrayList[E] private (private[ArrayList] var values: Array[AnyRef])
 
   override def toArray[F <: AnyRef](array: Array[F]): Array[F] =
     if (_size > array.length) {
-      Arrays.copyOf(values.asInstanceOf[Array[E with AnyRef]], _size, array.getClass.asInstanceOf[Class[_ <: Array[F]]])
+      Arrays.copyOf(values.asInstanceOf[Array[E with AnyRef]],
+                    _size,
+                    array.getClass.asInstanceOf[Class[_ <: Array[F]]])
     } else {
       System.arraycopy(values, 0, array, 0, _size)
       if (array.length > _size)
         array(_size) = null.asInstanceOf[F] // see tests
       array
     }
-
 
   def get(index: Int): E = {
     checkIndexInBounds(index)
@@ -87,7 +91,7 @@ class ArrayList[E] private (private[ArrayList] var values: Array[AnyRef])
   }
 
   override def remove(that: Any): Boolean = {
-    var i = 0
+    var i     = 0
     var found = false
     while (i < _size && !found) {
       if (values(i) == that) {
@@ -111,8 +115,7 @@ class ArrayList[E] private (private[ArrayList] var values: Array[AnyRef])
   // Removes all values, but doesn't reallocate or resize the underlying array.
   override def clear(): Unit = {
     var i = 0
-    while (i < _size)
-      values(i) = null
+    while (i < _size) values(i) = null
     _size = 0
   }
 
@@ -137,7 +140,8 @@ class ArrayList[E] private (private[ArrayList] var values: Array[AnyRef])
         val otherSize = other.size
         if (otherSize > 0) {
           ensureCapacity(_size + otherSize)
-          System.arraycopy(values, index, values, otherSize + index, _size - index)
+          System
+            .arraycopy(values, index, values, otherSize + index, _size - index)
           System.arraycopy(other.values, 0, values, index, otherSize)
           true
         } else {

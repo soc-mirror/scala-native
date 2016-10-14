@@ -6,7 +6,7 @@
    in all copies.
 
    There is NO WARRANTY for this software.  See license.txt for
-   details. *//* Copyright (c) 2008-2015, Avian Contributors
+   details. */ /* Copyright (c) 2008-2015, Avian Contributors
 
    Permission to use, copy, modify, and/or distribute this software
    for any purpose with or without fee is hereby granted, provided
@@ -18,12 +18,12 @@
 package java.util.regex
 
 /** This is a work in progress.
-  *
-  * @author zsombor and others
-  */
+ *
+ * @author zsombor and others
+ */
 abstract class Matcher(protected var input: CharSequence) {
   protected[regex] var _start: Int = 0
-  protected[regex] var _end: Int = 0
+  protected[regex] var _end: Int   = 0
 
   def matches: Boolean
 
@@ -40,15 +40,16 @@ abstract class Matcher(protected var input: CharSequence) {
     this
   }
 
-  def replaceAll(replacement: String): String = replace(replacement, Integer.MAX_VALUE)
+  def replaceAll(replacement: String): String =
+    replace(replacement, Integer.MAX_VALUE)
 
   def replaceFirst(replacement: String): String = replace(replacement, 1)
 
   protected def replace(replacement: String, limit: Int): String = {
     reset
     var sb: StringBuilder = null
-    var index: Int = 0
-    var count: Int = 0
+    var index: Int        = 0
+    var count: Int        = 0
     scala.util.control.Breaks.breakable {
       while (count < limit && index < input.length) {
         if (find(index)) {
@@ -61,11 +62,9 @@ abstract class Matcher(protected var input: CharSequence) {
           sb.append(replacement)
           index = _end
           count += 1
-        }
-        else if (index == 0) {
+        } else if (index == 0) {
           return input.toString
-        }
-        else {
+        } else {
           scala.util.control.Breaks.break()
         }
       }

@@ -6,7 +6,7 @@
    in all copies.
 
    There is NO WARRANTY for this software.  See license.txt for
-   details. *//* Copyright (c) 2008-2015, Avian Contributors
+   details. */ /* Copyright (c) 2008-2015, Avian Contributors
 
    Permission to use, copy, modify, and/or distribute this software
    for any purpose with or without fee is hereby granted, provided
@@ -18,11 +18,12 @@
 package java.util.regex
 
 /**
-  * This is a work in progress.
-  *
-  * @author zsombor and others
-  */
-class TrivialMatcher private[regex](val pattern: String, _input: CharSequence) extends Matcher(_input) {
+ * This is a work in progress.
+ *
+ * @author zsombor and others
+ */
+class TrivialMatcher private[regex] (val pattern: String, _input: CharSequence)
+    extends Matcher(_input) {
   reset(input)
 
   override def matches: Boolean = {
@@ -37,7 +38,7 @@ class TrivialMatcher private[regex](val pattern: String, _input: CharSequence) e
 
   override def find(start: Int): Boolean = {
     val p: String = pattern
-    val i: Int = TrivialPattern.indexOf(input, p, start)
+    val i: Int    = TrivialPattern.indexOf(input, p, start)
     if (i >= 0) {
       this._start = i
       this._end = i + p.length

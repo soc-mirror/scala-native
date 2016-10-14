@@ -6,7 +6,7 @@
    in all copies.
 
    There is NO WARRANTY for this software.  See license.txt for
-   details. *//* Copyright (c) 2008-2015, Avian Contributors
+   details. */ /* Copyright (c) 2008-2015, Avian Contributors
 
    Permission to use, copy, modify, and/or distribute this software
    for any purpose with or without fee is hereby granted, provided
@@ -18,14 +18,15 @@
 package java.util.regex
 
 /**
-  * A minimal implementation of a regular expression matcher.
-  *
-  * @author Johannes Schindelin
-  */
-class RegexMatcher private[regex](val vm: PikeVM, _input: CharSequence) extends Matcher(_input) {
-  private var array: Array[Char] = null
+ * A minimal implementation of a regular expression matcher.
+ *
+ * @author Johannes Schindelin
+ */
+class RegexMatcher private[regex] (val vm: PikeVM, _input: CharSequence)
+    extends Matcher(_input) {
+  private var array: Array[Char]            = null
   private[regex] var groupStart: Array[Int] = null
-  private[regex] var groupEnd: Array[Int] = null
+  private[regex] var groupEnd: Array[Int]   = null
 
   reset(input)
 
@@ -56,8 +57,9 @@ class RegexMatcher private[regex](val vm: PikeVM, _input: CharSequence) extends 
   }
 
   override def find: Boolean = {
-    find(_end + (if ((_start == _end)) 1
-    else 0))
+    find(
+        _end + (if ((_start == _end)) 1
+                else 0))
   }
 
   override def find(offset: Int): Boolean = {

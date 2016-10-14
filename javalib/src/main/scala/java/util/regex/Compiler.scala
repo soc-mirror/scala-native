@@ -6,7 +6,7 @@
    in all copies.
 
    There is NO WARRANTY for this software.  See license.txt for
-   details. *//* Copyright (c) 2008-2015, Avian Contributors
+   details. */ /* Copyright (c) 2008-2015, Avian Contributors
 
    Permission to use, copy, modify, and/or distribute this software
    for any purpose with or without fee is hereby granted, provided
@@ -18,19 +18,20 @@
 package java.util.regex
 
 /** Compiles regular expressions into `PikeVM`s.
-  *
-  * @author Johannes Schindelin
-  */
+ *
+ * @author Johannes Schindelin
+ */
 object Compiler {
-  private val regularCharacter: CharacterMatcher = CharacterMatcher.parse("[^\\\\.*+?|\\[\\]{}()^$]")
+  private val regularCharacter: CharacterMatcher =
+    CharacterMatcher.parse("[^\\\\.*+?|\\[\\]{}()^$]")
 
   private class Output(val expr: Compiler#Expression) {
-    private var program: Array[Int] = null
-    private[regex] var offset: Int = 0
-    private[regex] var groupCount: Int = -1
-    private var findPreambleSize: Int = 0
+    private var program: Array[Int]                            = null
+    private[regex] var offset: Int                             = 0
+    private[regex] var groupCount: Int                         = -1
+    private var findPreambleSize: Int                          = 0
     private var classes: java.util.ArrayList[CharacterMatcher] = null
-    private var lookarounds: java.util.ArrayList[PikeVM] = null
+    private var lookarounds: java.util.ArrayList[PikeVM]       = null
 
     // try-run to determine the code size
     expr.writeCode(this)
@@ -65,7 +66,8 @@ object Compiler {
     }
 
     def toVM: PikeVM = {
-      val classes: Array[CharacterMatcher] = new Array[CharacterMatcher](this.classes.size)
+      val classes: Array[CharacterMatcher] =
+        new Array[CharacterMatcher](this.classes.size)
       this.classes.toArray(classes)
       val lookarounds: Array[PikeVM] = new Array[PikeVM](this.lookarounds.size)
       this.lookarounds.toArray(lookarounds)
@@ -96,7 +98,8 @@ object Compiler {
 class Compiler() {
 
   private var root: Compiler#Group0 = new Group0
-  private var groups: java.util.ArrayList[Compiler#Group] = new java.util.ArrayList[Compiler#Group]
+  private var groups: java.util.ArrayList[Compiler#Group] =
+    new java.util.ArrayList[Compiler#Group]
 
   groups.add(root.group)
 
@@ -104,7 +107,8 @@ class Compiler() {
     protected[regex] def writeCode(output: Compiler.Output): Unit
   }
 
-  private class CharacterRange(val characterClass: CharacterMatcher) extends Expression {
+  private class CharacterRange(val characterClass: CharacterMatcher)
+      extends Expression {
     protected[regex] def writeCode(output: Compiler.Output): Unit = {
       output.add(PikeVMOpcodes.CHARACTER_CLASS)
       output.add(output.addClass(characterClass))
@@ -115,7 +119,11 @@ class Compiler() {
     }
   }
 
-  private class Repeat(var expr: Compiler#Expression, var minCount: Int, var maxCount: Int, var greedy: Boolean) extends Expression {
+  private class Repeat(var expr: Compiler#Expression,
+                       var minCount: Int,
+                       var maxCount: Int,
+                       var greedy: Boolean)
+      extends Expression {
     if (minCount < 0) {
       throw new RuntimeException("Unexpected min count: " + minCount)
     }
@@ -124,16 +132,19 @@ class Compiler() {
         throw new RuntimeException("Unexpected max count: " + maxCount)
       }
       if (minCount > maxCount) {
-        throw new RuntimeException("Unexpected range: " + minCount + ", " + maxCount)
+        throw new RuntimeException(
+            "Unexpected range: " + minCount + ", " + maxCount)
       }
     }
 
     protected[regex] def writeCode(output: Compiler.Output): Unit = {
       val start: Int = output.offset
-      val splitJmp: Int = if (greedy) PikeVMOpcodes.SPLIT_JMP
-      else PikeVMOpcodes.SPLIT
-      val split: Int = if (greedy) PikeVMOpcodes.SPLIT
-      else PikeVMOpcodes.SPLIT_JMP
+      val splitJmp: Int =
+        if (greedy) PikeVMOpcodes.SPLIT_JMP
+        else PikeVMOpcodes.SPLIT
+      val split: Int =
+        if (greedy) PikeVMOpcodes.SPLIT
+        else PikeVMOpcodes.SPLIT_JMP
       var i: Int = 1
       while (i < minCount) {
         {
@@ -149,8 +160,7 @@ class Compiler() {
           expr.writeCode(output)
           output.add(splitJmp)
           output.add(jump)
-        }
-        else {
+        } else {
           output.add(split)
           val jump: Int = output.markJump
           expr.writeCode(output)
@@ -158,8 +168,7 @@ class Compiler() {
           output.add(start + 2)
           output.setJump(jump)
         }
-      }
-      else {
+      } else {
         if (minCount > 0) {
           expr.writeCode(output)
         }
@@ -184,23 +193,29 @@ class Compiler() {
     }
 
     override def toString: String = {
-      val qualifier: String = if (greedy) ""
-      else "?"
+      val qualifier: String =
+        if (greedy) ""
+        else "?"
       if (minCount == 0 && maxCount < 2) {
         return expr.toString + (if (minCount < 0) "*"
-        else "?") + qualifier
+                                else "?") + qualifier
       }
       if (minCount == 1 && maxCount < 0) {
         return expr.toString + "+" + qualifier
       }
       expr.toString + "{" + minCount + "," + (if (maxCount < 0) ""
-      else "" + maxCount) + "}" + qualifier
+                                              else
+                                                "" + maxCount) + "}" + qualifier
     }
   }
 
-  private class Group(val capturing: Boolean, val initialList: java.util.ArrayList[Compiler#Expression]) extends Expression {
+  private class Group(
+      val capturing: Boolean,
+      val initialList: java.util.ArrayList[Compiler#Expression])
+      extends Expression {
 
-    private val list: java.util.ArrayList[Compiler#Expression] = new java.util.ArrayList[Compiler#Expression]
+    private val list: java.util.ArrayList[Compiler#Expression] =
+      new java.util.ArrayList[Compiler#Expression]
     private var alternatives: java.util.ArrayList[Compiler#Group] = null
 
     if (initialList != null) {
@@ -217,9 +232,7 @@ class Compiler() {
           output.add(c)
         }
 
-        override
-
-        def toString: String = {
+        override def toString: String = {
           if (c >= 0) {
             return "" + c.toChar
           }
@@ -304,7 +317,7 @@ class Compiler() {
       }
       if (alternatives != null) {
         val alternativesIterator = alternatives.iterator()
-        while(alternativesIterator.hasNext) {
+        while (alternativesIterator.hasNext) {
           val alternative = alternativesIterator.next()
           builder.append(alternative).append('|')
         }
@@ -320,7 +333,8 @@ class Compiler() {
     }
   }
 
-  private class Lookaround(val forward: Boolean, val negative: Boolean) extends Expression {
+  private class Lookaround(val forward: Boolean, val negative: Boolean)
+      extends Expression {
     final private[regex] val group: Compiler#Group = new Group(false, null)
 
     protected[regex] def writeCode(output: Compiler.Output): Unit = {
@@ -328,10 +342,12 @@ class Compiler() {
       if (!forward) {
         vm.reverse()
       }
-      output.add(if (forward) (if (negative) PikeVMOpcodes.NEGATIVE_LOOKAHEAD
-      else PikeVMOpcodes.LOOKAHEAD)
-      else (if (negative) PikeVMOpcodes.NEGATIVE_LOOKAHEAD
-      else PikeVMOpcodes.LOOKBEHIND))
+      output.add(
+          if (forward)
+            (if (negative) PikeVMOpcodes.NEGATIVE_LOOKAHEAD
+             else PikeVMOpcodes.LOOKAHEAD)
+          else (if (negative) PikeVMOpcodes.NEGATIVE_LOOKAHEAD
+                else PikeVMOpcodes.LOOKBEHIND))
       output.add(output.addLookaround(vm))
     }
 
@@ -339,8 +355,7 @@ class Compiler() {
       var inner: String = group.toString
       if (inner.startsWith("(?:")) {
         inner = inner.substring(3)
-      }
-      else {
+      } else {
         inner += ")"
       }
       "(?=" + inner
@@ -365,14 +380,16 @@ class Compiler() {
 
     override def toString: String = {
       val inner: String = group.toString
-      if (inner.startsWith("(?:") && inner.endsWith(")")) inner.substring(1, inner.length - 1)
+      if (inner.startsWith("(?:") && inner.endsWith(")"))
+        inner.substring(1, inner.length - 1)
       else inner
     }
   }
 
   def compile(regex: String): Pattern = {
     val array: Array[Char] = regex.toCharArray
-    val characterClassParser: CharacterMatcher.Parser = new CharacterMatcher.Parser(array)
+    val characterClassParser: CharacterMatcher.Parser =
+      new CharacterMatcher.Parser(array)
     var index: Int = 0
     ///
 
@@ -388,13 +405,15 @@ class Compiler() {
           case '.' =>
             current.push(PikeVMOpcodes.DOT)
           case '\\' =>
-            val unescaped: Int = characterClassParser.parseEscapedCharacter(index + 1)
+            val unescaped: Int =
+              characterClassParser.parseEscapedCharacter(index + 1)
             if (unescaped >= 0) {
               index = characterClassParser.getEndOffset - 1
               current.push(unescaped.toChar)
               return
             }
-            val characterClass: CharacterMatcher = characterClassParser.parseClass(index)
+            val characterClass: CharacterMatcher =
+              characterClassParser.parseClass(index)
             if (characterClass != null) {
               index = characterClassParser.getEndOffset - 1
               current.push(new CharacterRange(characterClass))
@@ -411,17 +430,19 @@ class Compiler() {
                 return
             }
             throw new RuntimeException("Parse error @" + index + ": " + regex)
-          case '?'
-             | '*'
-             | '+' =>
+          case '?' | '*' | '+' =>
             var greedy: Boolean = true
             if (index + 1 < array.length && array(index + 1) == '?') {
               greedy = false
               index += 1
             }
-            current.push(new Repeat(current.pop, if (c == '+') 1
-            else 0, if (c == '?') 1
-            else -1, greedy))
+            current.push(
+                new Repeat(current.pop,
+                           if (c == '+') 1
+                           else 0,
+                           if (c == '?') 1
+                           else -1,
+                           greedy))
             return
           case '{' =>
             index += 1
@@ -429,19 +450,23 @@ class Compiler() {
             val min: Int = regex.substring(index, index + length).toInt
             var max: Int = min
             index += length - 1
-            c = if (index + 1 < array.length) array(index + 1)
-            else 0
+            c =
+              if (index + 1 < array.length) array(index + 1)
+              else 0
             if (c == ',') {
               index += 1
               length = characterClassParser.digits(index + 1, 8, 10)
-              max = if (length == 0) -1
-              else regex.substring(index + 1, index + 1 + length).toInt
+              max =
+                if (length == 0) -1
+                else regex.substring(index + 1, index + 1 + length).toInt
               index += length
-              c = if (index + 1 < array.length) array(index + 1)
-              else 0
+              c =
+                if (index + 1 < array.length) array(index + 1)
+                else 0
             }
             if (c != '}') {
-              throw new RuntimeException("Invalid quantifier @" + index + ": " + regex)
+              throw new RuntimeException(
+                  "Invalid quantifier @" + index + ": " + regex)
             }
             index += 1
             var greedy: Boolean = true
@@ -461,7 +486,7 @@ class Compiler() {
               c = array(index)
               var lookAhead: Boolean = true
               if (c == '<') {
-                if ( {
+                if ({
                   index += 1;
                   index
                 } >= array.length) {
@@ -470,22 +495,24 @@ class Compiler() {
                 lookAhead = false
                 c = array(index)
                 if (c != '=' && c != '!') {
-                  throw new IllegalArgumentException(s"Named groups not supported @$index: $regex")
+                  throw new IllegalArgumentException(
+                      s"Named groups not supported @$index: $regex")
                 }
               }
               c match {
                 case ':' =>
                   capturing = false
-                case '!'
-                   | '=' => {
+                case '!' | '=' => {
                   capturing = false
-                  val lookaround: Compiler#Lookaround = new Lookaround(lookAhead, c == '!')
+                  val lookaround: Compiler#Lookaround =
+                    new Lookaround(lookAhead, c == '!')
                   current.push(lookaround)
                   groups.add(lookaround.group) // push
                   return
                 }
                 case _ =>
-                  throw new UnsupportedOperationException("Not yet supported: " + regex.substring(index))
+                  throw new UnsupportedOperationException(
+                      "Not yet supported: " + regex.substring(index))
               }
             }
             val newGroup = new Group(capturing, null)
@@ -494,12 +521,14 @@ class Compiler() {
             return
           case ')' =>
             if (groups.size < 2) {
-              throw new RuntimeException(s"Invalid group close @$index: $regex")
+              throw new RuntimeException(
+                  s"Invalid group close @$index: $regex")
             }
             groups.remove(groups.size - 1) // pop
             return
           case '[' => {
-            val matcher: CharacterMatcher = characterClassParser.parseClass(index)
+            val matcher: CharacterMatcher =
+              characterClassParser.parseClass(index)
             if (matcher == null) {
               throw new RuntimeException(s"Invalid range @$index: $regex")
             }
@@ -525,9 +554,10 @@ class Compiler() {
     }
     ///
     if (groups.size != 1) {
-      throw new IllegalArgumentException(s"Unclosed groups: (${groups.size - 1}): $regex")
+      throw new IllegalArgumentException(
+          s"Unclosed groups: (${groups.size - 1}): $regex")
     }
-    val vm: PikeVM = new Compiler.Output(root).toVM
+    val vm: PikeVM    = new Compiler.Output(root).toVM
     val plain: String = vm.isPlainString
     if (plain != null) {
       return new TrivialPattern(regex, plain, 0)

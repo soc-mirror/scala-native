@@ -6,7 +6,7 @@
    in all copies.
 
    There is NO WARRANTY for this software.  See license.txt for
-   details. *//* Copyright (c) 2008-2015, Avian Contributors
+   details. */ /* Copyright (c) 2008-2015, Avian Contributors
 
    Permission to use, copy, modify, and/or distribute this software
    for any purpose with or without fee is hereby granted, provided
@@ -18,18 +18,18 @@
 package java.util.regex
 
 /** This is a work in progress.
-  *
-  * @author zsombor and others
-  */
+ *
+ * @author zsombor and others
+ */
 object Pattern {
-  val UNIX_LINES: Int = 1
+  val UNIX_LINES: Int       = 1
   val CASE_INSENSITIVE: Int = 2
-  val COMMENTS: Int = 4
-  val MULTILINE: Int = 8
-  val LITERAL: Int = 16
-  val DOTALL: Int = 32
-  val UNICODE_CASE: Int = 64
-  val CANON_EQ: Int = 128
+  val COMMENTS: Int         = 4
+  val MULTILINE: Int        = 8
+  val LITERAL: Int          = 16
+  val DOTALL: Int           = 32
+  val UNICODE_CASE: Int     = 64
+  val CANON_EQ: Int         = 128
 
   def compile(regex: String): Pattern = compile(regex, 0)
 
@@ -40,10 +40,11 @@ object Pattern {
     new Compiler().compile(regex)
   }
 
-  def matches(regex: String, input: CharSequence): Boolean = Pattern.compile(regex).matcher(input).matches
+  def matches(regex: String, input: CharSequence): Boolean =
+    Pattern.compile(regex).matcher(input).matches
 }
 
-abstract class Pattern protected(val pattern: String, val patternFlags: Int) {
+abstract class Pattern protected (val pattern: String, val patternFlags: Int) {
   def flags: Int = patternFlags
 
   def matcher(input: CharSequence): Matcher
@@ -55,7 +56,7 @@ abstract class Pattern protected(val pattern: String, val patternFlags: Int) {
     if (_limit <= 0) {
       _limit = Int.MaxValue
     }
-    val _matcher: Matcher = matcher(input)
+    val _matcher: Matcher              = matcher(input)
     val result: java.util.List[String] = new java.util.ArrayList[String]
     var offset: Int = 0
 

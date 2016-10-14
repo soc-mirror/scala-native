@@ -11,7 +11,9 @@ object RegexSuite extends tests.Suite {
   private def expectNoMatch(regex: String, string: String): Unit =
     assert(!getMatcher(regex, string).matches())
 
-  private def expectGroups(regex: String, string: String, groups: String*): Unit = {
+  private def expectGroups(regex: String,
+                           string: String,
+                           groups: String*): Unit = {
     val matcher: Matcher = getMatcher(regex, string)
     assert(matcher.matches())
     assert(matcher.groupCount() == groups.length)
@@ -25,7 +27,9 @@ object RegexSuite extends tests.Suite {
     }
   }
 
-  private def expectFind(regex: String, string: String, matches: String*): Unit = {
+  private def expectFind(regex: String,
+                         string: String,
+                         matches: String*): Unit = {
     val matcher: Matcher = getMatcher(regex, string)
     var i = 0;
     while (i < matches.length) {
@@ -40,7 +44,7 @@ object RegexSuite extends tests.Suite {
     val array: Array[String] = Pattern.compile(regex).split(string)
     assert(array.length == list.length)
     var i = 0
-    while(i < list.length) {
+    while (i < list.length) {
       i += 1
       assert(list(i).equals(array(i)))
     }
@@ -92,6 +96,6 @@ object RegexSuite extends tests.Suite {
     expectGroups("a??(a{3}?)", "aaaa", "aaa")
     expectNoMatch("a(a{3}?)", "aaaaa")
     expectMatch("a(a{3,}?)", "aaaaa")
-    */
+   */
   }
 }

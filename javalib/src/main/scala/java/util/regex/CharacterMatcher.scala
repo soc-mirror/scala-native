@@ -6,7 +6,7 @@
    in all copies.
 
    There is NO WARRANTY for this software.  See license.txt for
-   details. *//* Copyright (c) 2008-2015, Avian Contributors
+   details. */ /* Copyright (c) 2008-2015, Avian Contributors
 
    Permission to use, copy, modify, and/or distribute this software
    for any purpose with or without fee is hereby granted, provided
@@ -18,43 +18,34 @@
 package java.util.regex
 
 /** A class to match classes of characters.
-  *
-  * This class is intended to be the working horse behind character classes
-  * such as `[a-z]`.
-  *
-  * @author Johannes Schindelin
-  */
+ *
+ * This class is intended to be the working horse behind character classes
+ * such as `[a-z]`.
+ *
+ * @author Johannes Schindelin
+ */
 object CharacterMatcher {
-  def parse(description: String): CharacterMatcher = parse(description.toCharArray)
+  def parse(description: String): CharacterMatcher =
+    parse(description.toCharArray)
 
   def parse(description: Array[Char]): CharacterMatcher = {
-    val parser: CharacterMatcher.Parser = new CharacterMatcher.Parser(description)
+    val parser: CharacterMatcher.Parser =
+      new CharacterMatcher.Parser(description)
     val result: CharacterMatcher = parser.parseClass
     if (parser.getEndOffset != description.length)
-      throw new RuntimeException("Short character class @" + parser.getEndOffset + ": " + new String(description))
+      throw new RuntimeException(
+          s"Short character class @${parser.getEndOffset}: $description")
     result
   }
 
-  private def specialClass(c: Int): String = {
-    if ('d' == c) {
-      return "[0-9]"
-    }
-    if ('D' == c) {
-      return "[^0-9]"
-    }
-    if ('s' == c) {
-      return "[ \\t\\n\\x0B\\f\\r]"
-    }
-    if ('S' == c) {
-      return "[^ \\t\\n\\x0B\\f\\r]"
-    }
-    if ('w' == c) {
-      return "[a-zA-Z_0-9]"
-    }
-    if ('W' == c) {
-      return "[^a-zA-Z_0-9]"
-    }
-    null
+  private def specialClass(c: Int): String = c match {
+    case 'd' => "[0-9]"
+    case 'D' => "[^0-9]"
+    case 's' => "[ \\t\\n\\x0B\\f\\r]"
+    case 'S' => "[^ \\t\\n\\x0B\\f\\r]"
+    case 'w' => "[a-zA-Z_0-9]"
+    case 'W' => "[^a-zA-Z_0-9]"
+    case _   => null
   }
 
   private[regex] class Parser(val description: Array[Char]) {
@@ -63,10 +54,10 @@ object CharacterMatcher {
     def getEndOffset: Int = offset
 
     /** Parses an escaped character.
-      *
-      * @param start the offset <u>after</u> the backslash
-      * @return the escaped character, or -1 if no character was recognized
-      */
+     *
+     * @param start the offset <u>after</u> the backslash
+     * @return the escaped character, or -1 if no character was recognized
+     */
     def parseEscapedCharacter(start: Int): Int = {
       offset = start
       parseEscapedCharacter
@@ -100,21 +91,10 @@ object CharacterMatcher {
         case 'n' => 0x000A
         case 'r' => 0x000D
         case 't' => 0x0009
-        case '\\'
-           | '.'
-           | '*'
-           | '+'
-           | '?'
-           | '|'
-           | '['
-           | ']'
-           | '{'
-           | '}'
-           | '('
-           | ')'
-           | '^'
-           | '$' => c
-        case _   => -1
+        case '\\' | '.' | '*' | '+' | '?' | '|' | '[' | ']' | '{' | '}' | '(' |
+            ')' | '^' | '$' =>
+          c
+        case _ => -1
       }
     }
 
@@ -122,20 +102,20 @@ object CharacterMatcher {
       var i: Int = 0
       while (true) {
         if (i == maxLength || offset + i >= description.length) {
-           return i
-         }
-         var value: Int = description(offset + i) - '0'
-         if (value < 0) {
-           return i
-         }
-         if (base > 10 && value >= 10) {
-           value += 10 - (if (value >= 'a' - '0') 'a' - '0'
-           else 'A' - '0')
-         }
-         if (value >= base) {
-           return i
-         }
-         i += 1
+          return i
+        }
+        var value: Int = description(offset + i) - '0'
+        if (value < 0) {
+          return i
+        }
+        if (base > 10 && value >= 10) {
+          val res = if (value >= 'a' - '0') 'a' - '0' else 'A' - '0'
+          value += 10 - res
+        }
+        if (value >= base) {
+          return i
+        }
+        i += 1
       }
       throw new Error // we should never get here
     }
@@ -148,9 +128,8 @@ object CharacterMatcher {
     def parseClass: CharacterMatcher = {
       if (description(offset) != '[') {
         if (description(offset) == '\\') {
-          val range: String = specialClass(description({
-            offset += 1; offset
-          }))
+          offset += 1
+          val range: String = specialClass(description(offset))
           if (range != null) {
             offset += 1
             return CharacterMatcher.parse(range)
@@ -158,13 +137,13 @@ object CharacterMatcher {
         }
         return null
       }
-      val matcher: CharacterMatcher = new CharacterMatcher(new Array[Boolean](0), description({
-        offset += 1; offset
-      }) == '^')
+      offset += 1
+      val matcher: CharacterMatcher =
+        new CharacterMatcher(new Array[Boolean](0), description(offset) == '^')
       if (matcher.inversePattern) {
         offset += 1
       }
-      var previous: Int = -1
+      var previous: Int           = -1
       var firstCharacter: Boolean = true
 
       scala.util.control.Breaks.breakable {
@@ -172,9 +151,8 @@ object CharacterMatcher {
           if (offset >= description.length) {
             unsupported("short regex")
           }
-          val c: Char = description({
-            offset += 1; offset - 1
-          })
+          val c: Char = description(offset)
+          offset += 1
           if (c == '-' && !firstCharacter && description(offset) != ']') {
             if (previous < 0) {
               unsupported("invalid range")
@@ -192,8 +170,7 @@ object CharacterMatcher {
               matcher.map(j) = true
               j += 1
             }
-          }
-          else if (c == '\\') {
+          } else if (c == '\\') {
             val saved: Int = offset
             previous = parseEscapedCharacter
             if (previous < 0) {
@@ -203,13 +180,12 @@ object CharacterMatcher {
                 unsupported("escape")
               }
               matcher.merge(clazz)
-            }
-            else {
+            } else {
               matcher.setMatch(previous)
             }
-          }
-          else if (c == '[') {
-            val parser: CharacterMatcher.Parser = new CharacterMatcher.Parser(description)
+          } else if (c == '[') {
+            val parser: CharacterMatcher.Parser =
+              new CharacterMatcher.Parser(description)
             val other: CharacterMatcher = parser.parseClass(offset - 1)
             if (other == null) {
               unsupported("invalid merge")
@@ -217,12 +193,13 @@ object CharacterMatcher {
             matcher.merge(other)
             offset = parser.getEndOffset
             previous = -1
-          }
-          else if (c == '&') {
-            if (offset + 2 > description.length || description(offset) != '&' || description(offset + 1) != '[') {
+          } else if (c == '&') {
+            if (offset + 2 > description.length || description(offset) != '&' || description(
+                    offset + 1) != '[') {
               unsupported("operation")
             }
-            val parser: CharacterMatcher.Parser = new CharacterMatcher.Parser(description)
+            val parser: CharacterMatcher.Parser =
+              new CharacterMatcher.Parser(description)
             val other: CharacterMatcher = parser.parseClass(offset + 1)
             if (other == null) {
               unsupported("invalid intersection")
@@ -230,11 +207,9 @@ object CharacterMatcher {
             matcher.intersect(other)
             offset = parser.getEndOffset
             previous = -1
-          }
-          else if (c == ']') {
+          } else if (c == ']') {
             scala.util.control.Breaks.break()
-          }
-          else {
+          } else {
             previous = c
             matcher.setMatch(previous)
           }
@@ -246,12 +221,14 @@ object CharacterMatcher {
 
     @throws[UnsupportedOperationException]
     private def unsupported(msg: String): Unit =
-      throw new UnsupportedOperationException(s"Unsupported $msg @$offset: ${new String(description, 0, description.length)}")
+      throw new UnsupportedOperationException(
+          s"Unsupported $msg @$offset: ${new String(description, 0, description.length)}")
   }
 
 }
 
-class CharacterMatcher private(var map: Array[Boolean], var inversePattern: Boolean) {
+class CharacterMatcher private (var map: Array[Boolean],
+                                var inversePattern: Boolean) {
   def matches(c: Char): Boolean = {
     val index: Int = c
     (map.length > index && map(index)) ^ inversePattern
@@ -270,8 +247,9 @@ class CharacterMatcher private(var map: Array[Boolean], var inversePattern: Bool
         if (!map(i)) {
           return
         }
-        builder.append(if (i >= ' ' && i <= 0x7f) "" + i.toChar
-        else "\\x" + Integer.toHexString(i))
+        builder.append(
+            if (i >= ' ' && i <= 0x7f) "" + i.toChar
+            else "\\x" + Integer.toHexString(i))
         var j: Int = i + 1
         while (j < map.length && map(j)) {
           j += 1
@@ -281,8 +259,9 @@ class CharacterMatcher private(var map: Array[Boolean], var inversePattern: Bool
           if (j > i + 1) {
             builder.append('-')
           }
-          builder.append(if (j >= ' ' && j <= 0x7f) "" + j.toChar
-          else "\\x" + Integer.toHexString(j))
+          builder.append(
+              if (j >= ' ' && j <= 0x7f) "" + j.toChar
+              else "\\x" + Integer.toHexString(j))
           i = j
         }
       }
