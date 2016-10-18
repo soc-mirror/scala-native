@@ -75,20 +75,18 @@ class TrivialPattern private[regex] (override val pattern: String,
       while (index < input.length && list.size < _limit - 1) {
         var i: Int = 0
         if (patternLength == 0) {
-          if (list.size == 0) {
+          if (list.size == 0)
             i = 0
-          } else {
+          else
             i = index + 1
-          }
         } else {
           i = TrivialPattern.indexOf(input, unescaped, index)
         }
         if (i >= 0) {
-          if (patternLength != 0 && i == index) {
+          if (patternLength != 0 && i == index)
             trailing += 1
-          } else {
+          else
             trailing = 0
-          }
           list.add(input.subSequence(index, i))
           index = i + patternLength
         } else {
@@ -96,11 +94,10 @@ class TrivialPattern private[regex] (override val pattern: String,
         }
       }
     }
-    if (strip && index > 0 && index == input.length) {
+    if (strip && index > 0 && index == input.length)
       trailing += 1
-    } else {
+    else
       trailing = 0
-    }
     list.add(input.subSequence(index, input.length))
     val result: Array[String] = new Array[String](list.size - trailing)
     var i: Int = 0

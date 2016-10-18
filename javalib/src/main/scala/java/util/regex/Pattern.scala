@@ -34,9 +34,8 @@ object Pattern {
   def compile(regex: String): Pattern = compile(regex, 0)
 
   def compile(regex: String, flags: Int): Pattern = {
-    if (flags != 0) {
+    if (flags != 0)
       throw new UnsupportedOperationException("TODO")
-    }
     new Compiler().compile(regex)
   }
 

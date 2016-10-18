@@ -26,27 +26,24 @@ object Compiler {
     CharacterMatcher.parse("[^\\\\.*+?|\\[\\]{}()^$]")
 
   private class Output(val expr: Compiler#Expression) {
-    private var program: Array[Int]                            = null
-    private[regex] var offset: Int                             = 0
-    private[regex] var groupCount: Int                         = -1
-    private var findPreambleSize: Int                          = 0
-    private var classes: java.util.ArrayList[CharacterMatcher] = null
-    private var lookarounds: java.util.ArrayList[PikeVM]       = null
-
     // try-run to determine the code size
     expr.writeCode(this)
-    program = new Array[Int](offset)
-    offset = 0
-    groupCount = -1
-    classes = new java.util.ArrayList[CharacterMatcher]
-    lookarounds = new java.util.ArrayList[PikeVM]
+
+    private var program: Array[Int]    = new Array[Int](offset)
+    private[regex] var offset: Int     = 0
+    private[regex] var groupCount: Int = -1
+    private var findPreambleSize: Int  = 0
+    private var classes: java.util.ArrayList[CharacterMatcher] =
+      new java.util.ArrayList[CharacterMatcher]
+    private var lookarounds: java.util.ArrayList[PikeVM] =
+      new java.util.ArrayList[PikeVM]
+
     // write it out!
     expr.writeCode(this)
 
     def add(opcode: Int): Unit = {
-      if (program != null) {
+      if (program != null)
         program(offset) = opcode
-      }
       offset += 1
     }
 
@@ -55,15 +52,11 @@ object Compiler {
       offset - 1
     }
 
-    def setJump(mark: Int): Unit = {
-      if (program != null) {
+    def setJump(mark: Int): Unit =
+      if (program != null)
         program(mark) = offset
-      }
-    }
 
-    def markFindPreambleEnd(): Unit = {
-      findPreambleSize = offset
-    }
+    def markFindPreambleEnd(): Unit = findPreambleSize = offset
 
     def toVM: PikeVM = {
       val classes: Array[CharacterMatcher] =
@@ -74,23 +67,23 @@ object Compiler {
       new PikeVM(program, findPreambleSize, groupCount, classes, lookarounds)
     }
 
-    def addClass(characterClass: CharacterMatcher): Int = {
+    def addClass(characterClass: CharacterMatcher): Int =
       if (program == null) {
-        return -1
+        -1
+      } else {
+        val result: Int = classes.size
+        classes.add(characterClass)
+        result
       }
-      val result: Int = classes.size
-      classes.add(characterClass)
-      result
-    }
 
-    def addLookaround(lookaround: PikeVM): Int = {
+    def addLookaround(lookaround: PikeVM): Int =
       if (program == null) {
-        return -1
+        -1
+      } else {
+        val result: Int = lookarounds.size
+        lookarounds.add(lookaround)
+        result
       }
-      val result: Int = lookarounds.size
-      lookarounds.add(lookaround)
-      result
-    }
   }
 
 }
@@ -114,9 +107,7 @@ class Compiler() {
       output.add(output.addClass(characterClass))
     }
 
-    override def toString: String = {
-      characterClass.toString
-    }
+    override def toString: String = characterClass.toString
   }
 
   private class Repeat(var expr: Compiler#Expression,
@@ -124,17 +115,13 @@ class Compiler() {
                        var maxCount: Int,
                        var greedy: Boolean)
       extends Expression {
-    if (minCount < 0) {
-      throw new RuntimeException("Unexpected min count: " + minCount)
-    }
+    if (minCount < 0)
+      throw new RuntimeException(s"Unexpected min count: $minCount")
     if (maxCount != -1) {
-      if (maxCount == 0) {
-        throw new RuntimeException("Unexpected max count: " + maxCount)
-      }
-      if (minCount > maxCount) {
-        throw new RuntimeException(
-            "Unexpected range: " + minCount + ", " + maxCount)
-      }
+      if (maxCount == 0)
+        throw new RuntimeException(s"Unexpected max count: $maxCount")
+      if (minCount > maxCount)
+        throw new RuntimeException(s"Unexpected range: $minCount, $maxCount")
     }
 
     protected[regex] def writeCode(output: Compiler.Output): Unit = {
@@ -147,12 +134,8 @@ class Compiler() {
         else PikeVMOpcodes.SPLIT_JMP
       var i: Int = 1
       while (i < minCount) {
-        {
-          expr.writeCode(output)
-        }
-        {
-          i += 1; i
-        }
+        expr.writeCode(output)
+        i += 1
       }
       if (maxCount == -1) {
         if (minCount > 0) {
@@ -169,43 +152,37 @@ class Compiler() {
           output.setJump(jump)
         }
       } else {
-        if (minCount > 0) {
+        if (minCount > 0)
           expr.writeCode(output)
-        }
         if (maxCount > minCount) {
           val jumps: Array[Int] = new Array[Int](maxCount - minCount)
           var i: Int = 0
           while (i < jumps.length) {
-            {
-              output.add(split)
-              jumps(i) = output.markJump
-              expr.writeCode(output)
-            }
-            {
-              i += 1; i
-            }
+            output.add(split)
+            jumps(i) = output.markJump
+            expr.writeCode(output)
+            i += 1
           }
-          for (jump <- jumps) {
-            output.setJump(jump)
+          var j: Int = 0
+          while(j < jumps.length) {
+            output.setJump(jumps(j))
+            j += 1
           }
         }
       }
     }
 
     override def toString: String = {
-      val qualifier: String =
-        if (greedy) ""
-        else "?"
+      val qualifier: String = if (greedy) "" else "?"
       if (minCount == 0 && maxCount < 2) {
-        return expr.toString + (if (minCount < 0) "*"
-                                else "?") + qualifier
+        val minCountString = if (minCount < 0) "*" else "?"
+        s"$expr$minCountString$qualifier"
+      } else if (minCount == 1 && maxCount < 0) {
+        s"$expr+$qualifier"
+      } else {
+        val maxCountString = if (maxCount < 0) "" else s"$maxCount"
+        s"$expr{$minCount,$maxCountString}$qualifier"
       }
-      if (minCount == 1 && maxCount < 0) {
-        return expr.toString + "+" + qualifier
-      }
-      expr.toString + "{" + minCount + "," + (if (maxCount < 0) ""
-                                              else
-                                                "" + maxCount) + "}" + qualifier
     }
   }
 
@@ -218,61 +195,41 @@ class Compiler() {
       new java.util.ArrayList[Compiler#Expression]
     private var alternatives: java.util.ArrayList[Compiler#Group] = null
 
-    if (initialList != null) {
+    if (initialList != null)
       list.addAll(initialList)
-    }
 
-    def push(expr: Compiler#Expression): Unit = {
-      list.add(expr)
-    }
+    def push(expr: Compiler#Expression): Unit = list.add(expr)
 
-    def push(c: Int): Unit = {
+    def push(c: Int): Unit =
       push(new Expression() {
-        def writeCode(output: Compiler.Output): Unit = {
-          output.add(c)
-        }
+        def writeCode(output: Compiler.Output): Unit = output.add(c)
 
-        override def toString: String = {
-          if (c >= 0) {
-            return "" + c.toChar
-          }
-          c match {
-            case PikeVMOpcodes.DOT =>
-              "."
-            case PikeVMOpcodes.WORD_BOUNDARY =>
-              "\\b"
-            case PikeVMOpcodes.NON_WORD_BOUNDARY =>
-              "\\B"
-            case PikeVMOpcodes.LINE_START =>
-              "^"
-            case PikeVMOpcodes.LINE_END =>
-              "$"
-            case _ =>
-              throw new RuntimeException("Unhandled opcode: " + c)
-          }
+        override def toString: String = c match {
+          case _ if c >= 0                     => "" + c.toChar
+          case PikeVMOpcodes.DOT               => "."
+          case PikeVMOpcodes.WORD_BOUNDARY     => "\\b"
+          case PikeVMOpcodes.NON_WORD_BOUNDARY => "\\B"
+          case PikeVMOpcodes.LINE_START        => "^"
+          case PikeVMOpcodes.LINE_END          => "$"
+          case _ =>
+            throw new RuntimeException(s"Unhandled opcode: $c")
         }
       })
-    }
 
     def startAlternative(): Unit = {
-      if (alternatives == null) {
+      if (alternatives == null)
         alternatives = new java.util.ArrayList[Compiler#Group]
-      }
       alternatives.add(new Group(false, list))
       list.clear()
     }
 
-    def pop: Compiler#Expression = {
-      val result: Compiler#Expression = list.remove(list.size - 1)
-      result
-    }
+    def pop: Compiler#Expression = list.remove(list.size - 1)
 
     protected[regex] def writeCode(output: Compiler.Output): Unit = {
       var groupIndex: Int = -1
       if (capturing) {
-        groupIndex = {
-          output.groupCount += 1; output.groupCount
-        }
+        output.groupCount += 1
+        groupIndex = output.groupCount
         output.add(PikeVMOpcodes.SAVE_OFFSET)
         output.add(2 * groupIndex)
       }
@@ -280,25 +237,28 @@ class Compiler() {
       if (alternatives != null) {
         jumps = new Array[Int](alternatives.size)
         var i: Int = 0
-        import scala.collection.JavaConversions._
-        for (alternative <- alternatives) {
+        val alternativesIterator = alternatives.iterator
+        while (alternativesIterator.hasNext) {
+          val alternative = alternativesIterator.next()
           output.add(PikeVMOpcodes.SPLIT)
           val jump: Int = output.markJump
           alternative.writeCode(output)
           output.add(PikeVMOpcodes.JMP)
-          jumps({
-            i += 1; i - 1
-          }) = output.markJump
+          jumps(i) = output.markJump
+          i += 1
           output.setJump(jump)
         }
       }
-      import scala.collection.JavaConversions._
-      for (expr <- list) {
+      val listIterator = list.iterator
+      while (listIterator.hasNext) {
+        val expr = listIterator.next()
         expr.writeCode(output)
       }
       if (jumps != null) {
-        for (jump <- jumps) {
-          output.setJump(jump)
+        var i: Int = 0
+        while (i < jumps.length) {
+          output.setJump(jumps(i))
+          i += 1
         }
       }
       if (capturing) {
@@ -311,9 +271,8 @@ class Compiler() {
       val builder: StringBuilder = new StringBuilder
       if (alternatives != null || list.size > 1) {
         builder.append('(')
-        if (!capturing) {
+        if (!capturing)
           builder.append("?:")
-        }
       }
       if (alternatives != null) {
         val alternativesIterator = alternatives.iterator()
@@ -322,13 +281,13 @@ class Compiler() {
           builder.append(alternative).append('|')
         }
       }
-      import scala.collection.JavaConversions._
-      for (expr <- list) {
+      val listIterator = list.iterator
+      while (listIterator.hasNext) {
+        val expr = listIterator.next()
         builder.append(expr)
       }
-      if (alternatives != null || list.size > 1) {
+      if (alternatives != null || list.size > 1)
         builder.append(')')
-      }
       builder.toString
     }
   }
@@ -391,8 +350,6 @@ class Compiler() {
     val characterClassParser: CharacterMatcher.Parser =
       new CharacterMatcher.Parser(array)
     var index: Int = 0
-    ///
-
     while (index < array.length) {
       def step(): Unit = {
         var c: Char = array(index)
@@ -429,20 +386,16 @@ class Compiler() {
                 current.push(PikeVMOpcodes.NON_WORD_BOUNDARY)
                 return
             }
-            throw new RuntimeException("Parse error @" + index + ": " + regex)
+            throw new RuntimeException(s"Parse error @$index: $regex")
           case '?' | '*' | '+' =>
             var greedy: Boolean = true
             if (index + 1 < array.length && array(index + 1) == '?') {
               greedy = false
               index += 1
             }
-            current.push(
-                new Repeat(current.pop,
-                           if (c == '+') 1
-                           else 0,
-                           if (c == '?') 1
-                           else -1,
-                           greedy))
+            val minCount = if (c == '+') 1 else 0
+            val maxCount = if (c == '?') 1 else -1
+            current.push(new Repeat(current.pop, minCount, maxCount, greedy))
             return
           case '{' =>
             index += 1
@@ -464,10 +417,8 @@ class Compiler() {
                 if (index + 1 < array.length) array(index + 1)
                 else 0
             }
-            if (c != '}') {
-              throw new RuntimeException(
-                  "Invalid quantifier @" + index + ": " + regex)
-            }
+            if (c != '}')
+              throw new RuntimeException(s"Invalid quantifier @$index: $regex")
             index += 1
             var greedy: Boolean = true
             if (index + 1 < array.length && array(index + 1) == '?') {
@@ -480,24 +431,19 @@ class Compiler() {
             var capturing: Boolean = true
             if (index + 1 < array.length && array(index + 1) == '?') {
               index += 2
-              if (index >= array.length) {
+              if (index >= array.length)
                 throw new RuntimeException(s"Short pattern @$index: $regex")
-              }
               c = array(index)
               var lookAhead: Boolean = true
               if (c == '<') {
-                if ({
-                  index += 1;
-                  index
-                } >= array.length) {
+                index += 1
+                if (index >= array.length)
                   throw new RuntimeException(s"Short pattern @$index: $regex")
-                }
                 lookAhead = false
                 c = array(index)
-                if (c != '=' && c != '!') {
+                if (c != '=' && c != '!')
                   throw new IllegalArgumentException(
                       s"Named groups not supported @$index: $regex")
-                }
               }
               c match {
                 case ':' =>
@@ -520,18 +466,15 @@ class Compiler() {
             current.push(newGroup)
             return
           case ')' =>
-            if (groups.size < 2) {
-              throw new RuntimeException(
-                  s"Invalid group close @$index: $regex")
-            }
+            if (groups.size < 2)
+              throw new RuntimeException(s"Invalid group close @$index: $regex")
             groups.remove(groups.size - 1) // pop
             return
           case '[' => {
             val matcher: CharacterMatcher =
               characterClassParser.parseClass(index)
-            if (matcher == null) {
+            if (matcher == null)
               throw new RuntimeException(s"Invalid range @$index: $regex")
-            }
             current.push(new CharacterRange(matcher))
             index = characterClassParser.getEndOffset - 1
             return
@@ -552,16 +495,14 @@ class Compiler() {
       step()
       index += 1
     }
-    ///
-    if (groups.size != 1) {
+    if (groups.size != 1)
       throw new IllegalArgumentException(
-          s"Unclosed groups: (${groups.size - 1}): $regex")
-    }
+        s"Unclosed groups: (${groups.size - 1}): $regex")
     val vm: PikeVM    = new Compiler.Output(root).toVM
     val plain: String = vm.isPlainString
-    if (plain != null) {
-      return new TrivialPattern(regex, plain, 0)
-    }
-    new RegexPattern(regex, 0, vm)
+    if (plain != null)
+      new TrivialPattern(regex, plain, 0)
+    else
+      new RegexPattern(regex, 0, vm)
   }
 }

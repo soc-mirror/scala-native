@@ -36,6 +36,15 @@ class ArrayList[E] private (private[ArrayList] var values: Array[AnyRef])
     -1
   }
 
+  override def lastIndexOf(that: Any): Int = {
+    var i = _size - 1
+    while (i > 0) {
+      if (values(i) == that) return i
+      i -= 1
+    }
+    -1
+  }
+
   def trimToSize(): Unit =
     if (values.length > _size)
       values = Arrays.copyOf(values, _size)
@@ -150,4 +159,14 @@ class ArrayList[E] private (private[ArrayList] var values: Array[AnyRef])
       case _ => super.addAll(index, c)
     }
   }
+
+  // Needed to avoid linking error
+
+  override def subList(fromIndex: Int, toIndex: Int): List[E] =
+    super.subList(fromIndex, toIndex)
+
+  override def listIterator(): ListIterator[E] = super.listIterator(0)
+
+  override def listIterator(index: Int): ListIterator[E] =
+    super.listIterator(index)
 }

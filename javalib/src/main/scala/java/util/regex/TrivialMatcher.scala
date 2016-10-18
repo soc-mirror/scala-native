@@ -26,7 +26,7 @@ class TrivialMatcher private[regex] (val pattern: String, _input: CharSequence)
     extends Matcher(_input) {
   reset(input)
 
-  override def matches: Boolean = {
+  override def matches: Boolean =
     if (pattern == input.toString) {
       _start = 0
       _end = input.length
@@ -34,7 +34,6 @@ class TrivialMatcher private[regex] (val pattern: String, _input: CharSequence)
     } else {
       false
     }
-  }
 
   override def find(start: Int): Boolean = {
     val p: String = pattern

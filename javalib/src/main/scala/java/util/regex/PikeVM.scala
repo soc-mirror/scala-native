@@ -33,14 +33,11 @@ object PikeVM {
     def set(start: Array[Int], end: Array[Int]): Unit
   }
 
-  private def length(opcode: Int): Int = {
+  private def length(opcode: Int): Int =
     if (opcode <= SINGLE_ARG_START && opcode >= SINGLE_ARG_END) 2
     else 1
-  }
 
-  private def isJump(opcode: Int): Boolean = {
-    opcode <= SPLIT && opcode >= JMP
-  }
+  private def isJump(opcode: Int): Boolean = opcode <= SPLIT && opcode >= JMP
 }
 
 /* For `find()`, we do not want to anchor the match at the start offset.
@@ -97,24 +94,22 @@ class PikeVM protected[regex] (val program: Array[Int],
 
     def queueOneImmediately(into: PikeVM#ThreadQueue): Int = {
       while (true) {
-        {
-          if (head < 0) {
-            return -1
-          }
-          val wasQueued: Boolean = queueNext(head, head, into)
-          val pc: Int            = head
-          if (head == tail) {
-            head = -1
-            tail = -1
-          } else {
-            head = next(pc) - 1
-            _next(pc) = 0
-          }
-          offsets(pc) = null
-          if (wasQueued) {
-            into.tail = pc
-            return pc
-          }
+        if (head < 0) {
+          return -1
+        }
+        val wasQueued: Boolean = queueNext(head, head, into)
+        val pc: Int            = head
+        if (head == tail) {
+          head = -1
+          tail = -1
+        } else {
+          head = next(pc) - 1
+          _next(pc) = 0
+        }
+        offsets(pc) = null
+        if (wasQueued) {
+          into.tail = pc
+          return pc
         }
       }
       throw new Error // should never happen
@@ -201,9 +196,9 @@ class PikeVM protected[regex] (val program: Array[Int],
 
     def saveOffset(pc: Int, index: Int, offset: Int): Unit = {
       println(s"offsets($pc)($index)")
+      offsets.mkString("[", ",", "]")
       println(s"offsets.length: ${offsets.length}")
       println(s"offsets(pc).length: ${offsets(pc).length}")
-      offsets.mkString("[", ",", "]")
       offsets(pc)(index) = offset + 1
     }
 
@@ -244,22 +239,15 @@ class PikeVM protected[regex] (val program: Array[Int],
       }
     }
 
-    private[regex] def startOffset(pc: Int): Int = {
-      offsets(pc)(0) - 1
-    }
+    private[regex] def startOffset(pc: Int): Int = offsets(pc)(0) - 1
 
-    def isEmpty: Boolean = {
-      head < 0
-    }
+    def isEmpty: Boolean = head < 0
 
-    def isScheduled(pc: Int): Boolean = {
-      pc == tail || _next(pc) > 0
-    }
+    def isScheduled(pc: Int): Boolean = pc == tail || _next(pc) > 0
 
-    def next(pc: Int): Int = {
+    def next(pc: Int): Int =
       if (pc < 0) head
       else _next(pc) - 1
-    }
 
     def clean(): Unit = {
       var pc: Int = head
@@ -365,9 +353,8 @@ class PikeVM protected[regex] (val program: Array[Int],
             val opcode: Int = program(pc)
             opcode match {
               case DOT =>
-                if (c != '\u0000' && c != '\r' && c != '\n') {
+                if (c != '\u0000' && c != '\r' && c != '\n')
                   current.queueNext(pc, pc + 1, next)
-                }
               case DOTALL =>
                 current.queueNext(pc, pc + 1, next)
               case WORD_BOUNDARY | NON_WORD_BOUNDARY => {
@@ -398,46 +385,39 @@ class PikeVM protected[regex] (val program: Array[Int],
               }
               case LINE_START =>
                 if (i == 0 || (multiLine && PikeVM.lineTerminator.matches(
-                            characters(i - 1)))) {
+                            characters(i - 1))))
                   current.queueImmediately(pc, pc + 1, false)
-                }
               case LINE_END =>
                 if (i == characters.length || (multiLine && PikeVM.lineTerminator
-                          .matches(c))) {
+                          .matches(c)))
                   current.queueImmediately(pc, pc + 1, false)
-                }
               case CHARACTER_CLASS =>
-                if (classes(program(pc + 1)).matches(c)) {
+                if (classes(program(pc + 1)).matches(c))
                   current.queueNext(pc, pc + 2, next)
-                }
               case LOOKAHEAD =>
                 if (lookarounds(program(pc + 1)).matches(characters,
                                                          i,
                                                          characters.length,
                                                          true,
                                                          false,
-                                                         null)) {
+                                                         null))
                   current.queueImmediately(pc, pc + 2, false)
-                }
               case LOOKBEHIND =>
                 if (lookarounds(program(pc + 1))
-                      .matches(characters, i - 1, -1, true, false, null)) {
+                      .matches(characters, i - 1, -1, true, false, null))
                   current.queueImmediately(pc, pc + 2, false)
-                }
               case NEGATIVE_LOOKAHEAD =>
                 if (!lookarounds(program(pc + 1)).matches(characters,
                                                           i,
                                                           characters.length,
                                                           true,
                                                           false,
-                                                          null)) {
+                                                          null))
                   current.queueImmediately(pc, pc + 2, false)
-                }
               case NEGATIVE_LOOKBEHIND =>
                 if (!lookarounds(program(pc + 1))
-                      .matches(characters, i - 1, -1, true, false, null)) {
+                      .matches(characters, i - 1, -1, true, false, null))
                   current.queueImmediately(pc, pc + 2, false)
-                }
               /* immediate opcodes, i.e. thread continues within the same step */
               case SAVE_OFFSET =>
                 if (result != null) {
@@ -455,14 +435,11 @@ class PikeVM protected[regex] (val program: Array[Int],
               case JMP =>
                 current.queueImmediately(pc, program(pc + 1), false)
               case _ if program(pc) >= 0 && program(pc) <= 0xffff =>
-                if (program(pc) >= 0 && program(pc) <= 0xffff) {
-                  if (c == program(pc).toChar) {
+                if (program(pc) >= 0 && program(pc) <= 0xffff)
+                  if (c == program(pc).toChar)
                     current.queueNext(pc, pc + 1, next)
-                  }
-                }
               case _ =>
-                throw new RuntimeException(
-                    "Invalid opcode: " + opcode + " at pc " + pc)
+                throw new RuntimeException(s"Invalid opcode: $opcode at pc $pc")
             }
             false
           }
@@ -601,14 +578,12 @@ class PikeVM protected[regex] (val program: Array[Int],
     {
       var pc: Int = start
       while (pc < end) {
-        {
-          if (PikeVM.isJump(program(pc))) {
-            val target: Int = program(pc + 1)
-            newJumps(pc + 1) = newJumps(target)
-            newJumps(target) = pc + 1
-            if (program(pc) == JMP) {
-              brokenArrows(pc + 2) = true
-            }
+        if (PikeVM.isJump(program(pc))) {
+          val target: Int = program(pc + 1)
+          newJumps(pc + 1) = newJumps(target)
+          newJumps(target) = pc + 1
+          if (program(pc) == JMP) {
+            brokenArrows(pc + 2) = true
           }
         }
         pc += PikeVM.length(program(pc))
@@ -621,19 +596,15 @@ class PikeVM protected[regex] (val program: Array[Int],
       var pc: Int       = start
       var mappedPC: Int = end
       while (mappedPC > 0 && pc < end) {
-        {
-          var jump: Int = newJumps(pc)
-          while (jump > 0) {
-            {
-              mappedPC -= 2
-            }
-            jump = newJumps(jump)
-          }
-          if (!PikeVM.isJump(program(pc))) {
-            mappedPC -= PikeVM.length(program(pc))
-          }
-          mapping(pc) = mappedPC
+        var jump: Int = newJumps(pc)
+        while (jump > 0) {
+          mappedPC -= 2
+          jump = newJumps(jump)
         }
+        if (!PikeVM.isJump(program(pc))) {
+          mappedPC -= PikeVM.length(program(pc))
+        }
+        mapping(pc) = mappedPC
         pc += PikeVM.length(program(pc))
       }
     }
@@ -648,25 +619,17 @@ class PikeVM protected[regex] (val program: Array[Int],
           var brokenArrow: Boolean = brokenArrows(pc)
           var jump: Int            = newJumps(pc)
           while (jump > 0) {
-            {
-              reverse({
-                mappedPC -= 1;
-                mappedPC
-              }) = mapping(jump - 1)
-              if (brokenArrow) {
-                reverse({
-                  mappedPC -= 1;
-                  mappedPC
-                }) = JMP
-                brokenArrow = false
-              } else {
-                reverse({
-                  mappedPC -= 1;
-                  mappedPC
-                }) =
-                  if (program(jump - 1) == SPLIT_JMP) SPLIT_JMP
-                  else SPLIT
-              }
+            mappedPC -= 1
+            reverse(mappedPC) = mapping(jump - 1)
+            if (brokenArrow) {
+              mappedPC -= 1
+              reverse(mappedPC) = JMP
+              brokenArrow = false
+            } else {
+              mappedPC -= 1
+              reverse(mappedPC) =
+                if (program(jump - 1) == SPLIT_JMP) SPLIT_JMP
+                else SPLIT
             }
             jump = newJumps(jump)
           }
@@ -675,16 +638,10 @@ class PikeVM protected[regex] (val program: Array[Int],
           }
           if (!PikeVM.isJump(program(pc))) {
             var i: Int = PikeVM.length(program(pc))
-            while ({
-              i -= 1;
-              i + 1
-            } > 0) {
-              {
-                reverse({
-                  mappedPC -= 1;
-                  mappedPC
-                }) = program(pc + i)
-              }
+            while (i > 0) {
+              mappedPC -= 1
+              reverse(mappedPC) = program(pc + i)
+              i -= 1
             }
           }
         }

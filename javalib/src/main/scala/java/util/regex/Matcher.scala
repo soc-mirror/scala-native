@@ -77,26 +77,23 @@ abstract class Matcher(protected var input: CharSequence) {
 
   def group: String = input.subSequence(_start, _end).toString
 
-  def start(group: Int): Int = {
-    if (group == 0) {
-      return _start
-    }
-    throw new UnsupportedOperationException
-  }
+  def start(group: Int): Int =
+    if (group == 0)
+      _start
+    else
+      throw new UnsupportedOperationException
 
-  def end(group: Int): Int = {
-    if (group == 0) {
-      return _end
-    }
-    throw new UnsupportedOperationException
-  }
+  def end(group: Int): Int =
+    if (group == 0)
+      _end
+    else
+      throw new UnsupportedOperationException
 
-  def group(_group: Int): String = {
-    if (_group == 0) {
-      return group
-    }
-    throw new UnsupportedOperationException
-  }
+  def group(_group: Int): String =
+    if (_group == 0)
+      group
+    else
+      throw new UnsupportedOperationException
 
   def groupCount: Int = 0
 }

@@ -51,28 +51,17 @@ class RegexMatcher private[regex] (val vm: PikeVM, _input: CharSequence)
     reset
   }
 
-  override def matches: Boolean = {
-    if (array == null) println("array null!")
-    vm.matches(array, 0, array.length, true, true, adapter)
-  }
+  override def matches: Boolean =
+     vm.matches(array, 0, array.length, true, true, adapter)
 
-  override def find: Boolean = {
-    find(
-        _end + (if ((_start == _end)) 1
-                else 0))
-  }
+  override def find: Boolean = find(_end + (if ((_start == _end)) 1 else 0))
 
-  override def find(offset: Int): Boolean = {
+  override def find(offset: Int): Boolean =
     vm.matches(array, offset, array.length, false, false, adapter)
-  }
 
-  override def start(group: Int): Int = {
-    groupStart(group)
-  }
+  override def start(group: Int): Int = groupStart(group)
 
-  override def end(group: Int): Int = {
-    groupEnd(group)
-  }
+  override def end(group: Int): Int = groupEnd(group)
 
   override def group(group: Int): String = {
     val offset: Int = start(group)
@@ -83,7 +72,5 @@ class RegexMatcher private[regex] (val vm: PikeVM, _input: CharSequence)
     new String(array, offset, length)
   }
 
-  override def groupCount: Int = {
-    groupStart.length - 1
-  }
+  override def groupCount: Int = groupStart.length - 1
 }
