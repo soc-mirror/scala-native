@@ -7,32 +7,17 @@ object ArrayListSuite extends tests.Suite {
   test("shouldStoreStrings") {
     val lst = new ArrayList[String]
 
-    println(0)
-    println(lst.size())
-    println(0 == lst.size())
-    assertEquals(0, 0)
-    println("01")
     assertEquals(0, lst.size())
-    println(1)
     lst.add("one")
-    println(2)
     assertEquals(1, lst.size())
-    println(3)
     assertEquals("one", lst.get(0))
-    println(4)
     lst.add("two")
-    println(5)
     assertEquals(2, lst.size())
-    println(6)
     assertEquals("one", lst.get(0))
-    println(7)
     assertEquals("two", lst.get(1))
-    println(8)
 
     assertThrows[IndexOutOfBoundsException](lst.get(-1))
-    println(9)
     assertThrows[IndexOutOfBoundsException](lst.get(lst.size))
-    println(10)
   }
 
   test("shouldStoreIntegers") {
@@ -156,15 +141,23 @@ object ArrayListSuite extends tests.Suite {
   test("shouldCheckContainedPresenceForDoubleCornerCases") {
     val al = new ArrayList[Double]
 
+    println(0)
     al.add(-0.0)
+    println(1)
     assert(al.contains(-0.0))
+    println(2)
     assertNot(al.contains(+0.0))
+    println(3)
 
     al.clear()
 
+    println(4)
     al.add(+0.0)
+    println(5)
     assertNot(al.contains(-0.0))
+    println(6)
     assert(al.contains(+0.0))
+    println(7)
   }
 
   test("shouldGiveAProperSetOperation") {

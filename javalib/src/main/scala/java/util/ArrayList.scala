@@ -124,7 +124,10 @@ class ArrayList[E] private (private[ArrayList] var values: Array[AnyRef])
   // Removes all values, but doesn't reallocate or resize the underlying array.
   override def clear(): Unit = {
     var i = 0
-    while (i < _size) values(i) = null
+    while (i < _size) {
+      values(i) = null
+      i += 1
+    }
     _size = 0
   }
 

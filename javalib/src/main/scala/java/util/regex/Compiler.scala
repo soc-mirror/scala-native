@@ -29,9 +29,9 @@ object Compiler {
     // try-run to determine the code size
     expr.writeCode(this)
 
-    private var program: Array[Int]    = new Array[Int](offset)
     private[regex] var offset: Int     = 0
     private[regex] var groupCount: Int = -1
+    private var program: Array[Int]    = new Array[Int](offset)
     private var findPreambleSize: Int  = 0
     private var classes: java.util.ArrayList[CharacterMatcher] =
       new java.util.ArrayList[CharacterMatcher]
