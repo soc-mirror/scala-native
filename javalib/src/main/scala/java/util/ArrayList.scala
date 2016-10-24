@@ -30,7 +30,12 @@ class ArrayList[E] private (private[ArrayList] var values: Array[AnyRef])
   override def indexOf(that: Any): Int = {
     var i = 0
     while (i < _size) {
-      if (values(i) == that) return i
+      val value = values(i)
+      if (value != null) {
+        if (value equals that)
+          return i
+      } else if (that == null)
+        return i
       i += 1
     }
     -1
@@ -39,7 +44,12 @@ class ArrayList[E] private (private[ArrayList] var values: Array[AnyRef])
   override def lastIndexOf(that: Any): Int = {
     var i = _size - 1
     while (i > 0) {
-      if (values(i) == that) return i
+      val value = values(i)
+      if (value != null) {
+        if (value equals that)
+          return i
+      } else if (that == null)
+        return i
       i -= 1
     }
     -1
@@ -103,7 +113,7 @@ class ArrayList[E] private (private[ArrayList] var values: Array[AnyRef])
     var i     = 0
     var found = false
     while (i < _size && !found) {
-      if (values(i) == that) {
+      if (values(i) equals that) {
         found = true
         remove0(i)
       }
