@@ -1,6 +1,16 @@
 package java.lang
 
 object DoubleSuite extends tests.Suite {
+  test("equals") {
+    assertNot(+0.0 equals -0.0)
+
+    assert(Double.NaN equals Double.NaN)
+
+    val x = Double.NaN
+    val y = java.lang.Double.longBitsToDouble(java.lang.Double.doubleToRawLongBits(x) | 1)
+    assert(x equals y)
+  }
+
   test("parseDouble") {
     assert(Double.parseDouble("1.0") == 1.0)
     assert(Double.parseDouble("-1.0") == -1.0)

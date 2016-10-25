@@ -1,6 +1,16 @@
 package java.lang
 
 object FloatSuite extends tests.Suite {
+  test("equals") {
+    assertNot(+0.0f equals -0.0f)
+
+    assert(Float.NaN equals Float.NaN)
+
+    val x = Float.NaN
+    val y = java.lang.Float.intBitsToFloat(java.lang.Float.floatToRawIntBits(x) | 1)
+    assert(x equals y)
+  }
+
   test("parseFloat") {
     assert(Float.parseFloat("1.0") == 1.0f)
     assert(Float.parseFloat("-1.0") == -1.0f)

@@ -91,6 +91,9 @@ class ArrayList[E] private (private[ArrayList] var values: Array[AnyRef])
   }
 
   override def add(e: E): Boolean = {
+    val len = values.length
+    if (_size == len)
+      values = Arrays.copyOf(values, len + len / 2)
     values(_size) = e.asInstanceOf[AnyRef]
     _size += 1
     true
@@ -98,8 +101,12 @@ class ArrayList[E] private (private[ArrayList] var values: Array[AnyRef])
 
   override def add(index: Int, element: E): Unit = {
     checkIndexOnBounds(index)
+    val len = values.length
+    if (_size == len)
+      values = Arrays.copyOf(values, len + len / 2)
     System.arraycopy(values, index, values, index + 1, size - index)
     values(index) = element.asInstanceOf[AnyRef]
+    _size += 1
   }
 
   override def remove(index: Int): E = {

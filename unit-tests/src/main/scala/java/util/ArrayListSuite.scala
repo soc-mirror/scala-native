@@ -141,23 +141,15 @@ object ArrayListSuite extends tests.Suite {
   test("shouldCheckContainedPresenceForDoubleCornerCases") {
     val al = new ArrayList[Double]
 
-    println(0)
     al.add(-0.0)
-    println(1)
     assert(al.contains(-0.0))
-    println(2)
     assertNot(al.contains(+0.0))
-    println(3)
 
     al.clear()
 
-    println(4)
     al.add(+0.0)
-    println(5)
     assertNot(al.contains(-0.0))
-    println(6)
     assert(al.contains(+0.0))
-    println(7)
   }
 
   test("shouldGiveAProperSetOperation") {
