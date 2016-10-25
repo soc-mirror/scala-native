@@ -9,7 +9,7 @@ object RegexSuite extends tests.Suite {
     assert(getMatcher(regex, string).matches())
 
   private def expectNoMatch(regex: String, string: String): Unit =
-    assert(!getMatcher(regex, string).matches())
+    assertNot(getMatcher(regex, string).matches())
 
   private def expectGroups(regex: String,
                            string: String,
@@ -50,27 +50,75 @@ object RegexSuite extends tests.Suite {
     }
   }
 
-  test("regex tests") {
+  test("""expectMatch("a(bb)?a", "abba")""") {
     expectMatch("a(bb)?a", "abba")
-    /*
-    expectNoMatch("a(bb)?a", "abbba")
-    expectNoMatch("a(bb)?a", "abbaa")
-    expectGroups("a(a*?)(a?)(a??)(a+)(a*)a", "aaaaaa", "", "a", "", "aaa", "")
-    expectMatch("...", "abc")
-    expectNoMatch(".", "\n")
+  }
 
+  test("""expectNoMatch("a(bb)?a", "abbba")""") {
+    expectNoMatch("a(bb)?a", "abbba")
+  }
+
+  test("""expectGroups("a(a*?)(a?)(a??)(a+)(a*)a", "aaaaaa", "", "a", "", "aaa", "")""") {
+    expectGroups("a(a*?)(a?)(a??)(a+)(a*)a", "aaaaaa", "", "a", "", "aaa", "")
+  }
+
+  test("""expectMatch("...", "abc")""") {
+    expectMatch("...", "abc")
+  }
+
+  test("""expectNoMatch(".", "\n")""") {
+    expectNoMatch(".", "\n")
+  }
+
+  test("""expectGroups("a(bb)*a", "abbbba", "bb")""") {
     expectGroups("a(bb)*a", "abbbba", "bb")
+  }
+
+  test("""expectGroups("a(bb)?(bb)+a", "abba", null, "bb")""") {
     expectGroups("a(bb)?(bb)+a", "abba", null, "bb")
+  }
+
+  test("""expectFind(" +", "Hello  ,   world! ", "  ", "   ", " ")""") {
     expectFind(" +", "Hello  ,   world! ", "  ", "   ", " ")
+  }
+
+  test("""expectMatch("[0-9A-Fa-f]+", "08ef")""") {
     expectMatch("[0-9A-Fa-f]+", "08ef")
+  }
+
+  test("""expectNoMatch("[0-9A-Fa-f]+", "08@ef")""") {
     expectNoMatch("[0-9A-Fa-f]+", "08@ef")
+  }
+
+  test("""expectGroups("(?:a)", "a")""") {
     expectGroups("(?:a)", "a")
+  }
+
+  test("""expectGroups("a|(b|c)", "a", null.asInstanceOf[String])""") {
     expectGroups("a|(b|c)", "a", null.asInstanceOf[String])
+  }
+
+  test("""expectGroups("a|(b|c)", "c", "c")""") {
     expectGroups("a|(b|c)", "c", "c")
+  }
+
+  test("""expectGroups("(?=a)a", "a")""") {
     expectGroups("(?=a)a", "a")
+  }
+
+  test("""expectGroups(".*(o)(?<=[A-Z][a-z]{1,4})", "Hello", "o")""") {
     expectGroups(".*(o)(?<=[A-Z][a-z]{1,4})", "Hello", "o")
+  }
+
+  test("""expectNoMatch("(?!a).", "a")""") {
     expectNoMatch("(?!a).", "a")
+  }
+
+  test("""expectMatch("[\\d]", "0")""") {
     expectMatch("[\\d]", "0")
+  }
+
+    /*
     expectMatch("\\0777", "?7")
     expectMatch("\\a", "\u0007")
     expectMatch("\\\\", "\\")
@@ -97,5 +145,4 @@ object RegexSuite extends tests.Suite {
     expectNoMatch("a(a{3}?)", "aaaaa")
     expectMatch("a(a{3,}?)", "aaaaa")
    */
-  }
 }
